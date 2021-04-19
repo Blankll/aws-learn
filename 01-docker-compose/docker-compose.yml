@@ -22,3 +22,5 @@ services:
     image: mariadb:10.5
     environment:
       - MYSQL_ROOT_PASSWORD=123456
+  redis:
+    image: redis:5.0.10-alpine
