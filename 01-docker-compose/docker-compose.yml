@@ -6,22 +6,37 @@ services:
       - 80:80
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    networks: 
+      - fontend-services
   html:
-    build:
-      context: ./html
-      dockerfile: Dockerfile-dev
+    image: nginx:alpine
     volumes: 
       - ./html/nginx.conf:/etc/nginx/nginx.conf
-      - ./php:/var/www/html
+      - ./html:/app
+    networks: 
+      - fontend-services
+      - backend-services
   app:
     build:
       context: ./php
       dockerfile: Dockerfile-dev
     volumes:
       - ./php:/app
+    networks: 
+      - backend-services
   mysql:
     image: mariadb:10.5
     environment:
       - MYSQL_ROOT_PASSWORD=123456
+    networks: 
+      - backend-services
   redis:
     image: redis:5.0.10-alpine
+    networks: 
+      - backend-services
+
+networks: 
+  backend-services:
+    driver: bridge
+  fontend-services:
+    driver: bridge
