@@ -30,6 +30,8 @@ services:
       - MYSQL_ROOT_PASSWORD=123456
     networks: 
       - backend-services
+    volumes:
+      - ./mysql:/docker-entrypoint-initdb.d
   redis:
     image: redis:5.0.10-alpine
     networks: 

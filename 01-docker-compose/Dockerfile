@@ -1,6 +1,0 @@
-ARG VERSION=latest
-FROM ubuntu:$VERSION
-
-WORKDIR /app
-ENV TEE=$VERSION
-ENV TENV=production

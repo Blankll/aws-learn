@@ -42,26 +42,38 @@
         </table>
         <div class="button-group">
             <button id="createButton">create new item</button>
+            <button id="selectButton">select all items</button>
             <button id="redisButton">check redis</button>
         </div>
 
-        <p id="result"></p>
+        <div id="result"></div>
     </main>
     <script src="./jQuery.js"></script>
     <script>
         const createButton = $('#createButton');
+        const selectButton = $('#selectButton');
         const redisButton = $('#redisButton');
         createButton.on('click', () => {
-            $.get("/mysql.php", (data, stats) => {
+            $.post("/insert.php", (data, stats) => {
                 console.log(data);
-                console.log(status)
+              $('#result').append(`<p>-------------insert result------------------</p>`);
+              $('#result').append(`<p>${data}</p>`);
+            });
+        });
+        
+        selectButton.on('click', () => {
+            $.post("/mysql.php", (data, stats) => {
+                console.log(data);
+              $('#result').append(`<p>-------------select result------------------</p>`);
+              $('#result').append(`<p>${data}</p>`);
             });
         });
 
         redisButton.on('click', () => {
             $.get("/redis.php", (data, stats) => {
                 console.log(data);
-                console.log(status)
+              $('#result').append(`<p>-------------redis result------------------</p>`);
+              $('#result').append(`<p>${data}</p>`);
             });
         });
     </script>
