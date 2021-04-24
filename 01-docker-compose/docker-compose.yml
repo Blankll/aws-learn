@@ -32,6 +32,7 @@ services:
       - backend-services
     volumes:
       - ./mysql:/docker-entrypoint-initdb.d
+      - db-data:/var/lib/mysql
   redis:
     image: redis:5.0.10-alpine
     networks: 
@@ -42,3 +43,6 @@ networks:
     driver: bridge
   fontend-services:
     driver: bridge
+
+volumes:
+  db-data:
