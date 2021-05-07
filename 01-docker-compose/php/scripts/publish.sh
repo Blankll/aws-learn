@@ -1,7 +1,7 @@
 #!/bin/bash -eu
 cd $(dirname $0)/..
 
-IMAGE=$(ACCOUNT_ID=${ACCOUNT_ID} ./scripts/package.sh | grep "image:" | awk -F ': ' '{ printf("%s", $2)}')
+IMAGE=$(ACCOUNT_ID=${ACCOUNT_ID}./scripts/package.sh | grep "image:" | awk -F ': ' '{ printf("%s", $2)}')
 REPOSITORY=$(echo $IMAGE | awk -F ':' '{ printf("%s", $1) }')
 VERSION=$(echo $IMAGE | awk -F ':' '{ printf("%s", $2) }')
 
