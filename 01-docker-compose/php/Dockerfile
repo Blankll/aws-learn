@@ -1,0 +1,18 @@
+FROM php:7.4.13-fpm-alpine
+
+EXPOSE 9000
+WORKDIR /app
+
+RUN apk add autoconf gcc g++ make
+RUN docker-php-ext-install pdo pdo_mysql \
+    && pecl install redis \
+    && docker-php-ext-enable redis
+
+RUN mv "${PHP_INI_DIR}/php.ini-production" "${PHP_INI_DIR}/php.ini"
+
+RUN addgroup -S appuser && adduser -S appuser -G appuser
+RUN chown -R appuser:appuser /app
+
+USER appuser
+
+COPY --chown=appuser:appuser . /app

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>web pages</title>
+    <style>
+        h1 {
+            text-align: center;
+        }
+        td {
+            text-align: center;
+            height: 30px;
+        }
+        .button-group {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-around;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>shop</h1>
+        <table style="width:100%">
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Price</th>
+            </tr>
+            <tr>
+                <td>aa</td>
+                <td>10</td>
+                <td>50</td>
+            </tr>
+            <tr>
+                <td>bb</td>
+                <td>20</td>
+                <td>94</td>
+            </tr>
+        </table>
+        <div class="button-group">
+            <button id="createButton">create new item</button>
+            <button id="selectButton">select all items</button>
+            <button id="redisButton">check redis</button>
+        </div>
+
+        <div id="result"></div>
+    </main>
+    <script src="./jQuery.js"></script>
+    <script>
+        const createButton = $('#createButton');
+        const selectButton = $('#selectButton');
+        const redisButton = $('#redisButton');
+        createButton.on('click', () => {
+            $.post("/insert.php", (data, stats) => {
+                console.log(data);
+              $('#result').append(`<p>-------------insert result------------------</p>`);
+              $('#result').append(`<p>${data}</p>`);
+            });
+        });
+        
+        selectButton.on('click', () => {
+            $.post("/mysql.php", (data, stats) => {
+                console.log(data);
+              $('#result').append(`<p>-------------select result------------------</p>`);
+              $('#result').append(`<p>${data}</p>`);
+            });
+        });
+
+        redisButton.on('click', () => {
+            $.get("/redis.php", (data, stats) => {
+                console.log(data);
+              $('#result').append(`<p>-------------redis result------------------</p>`);
+              $('#result').append(`<p>${data}</p>`);
+            });
+        });
+    </script>
+</body>
+</html>
