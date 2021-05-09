@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: express-learn-service
+spec:
+  type: ClusterIP
+  selector:
+    app: express-learn
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
