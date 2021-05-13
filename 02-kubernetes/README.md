@@ -12,3 +12,17 @@ basic command
 - kubectl delete 
     > Delete resources either from a file, stdin, or specifying label selectors names, resource selectors, or resources.
 
+
+Forward one or more local ports to a pod
+```bash
+kubectl port-forward TYPE/NAME [options] [LOCAL_PORT:]REMOTE_PORT [...[LOCAL_PORT_N:]REMOTE_PORT_N]
+```
+
+
+## Pod
+## Node
+## Deployment
+## Service
+## Ingress
+## ReplicaSet 
+## Namespace 
