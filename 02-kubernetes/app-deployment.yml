@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  express-learn-deployment
+  labels:
+    app: express-learn
+    tier: express
+spec:
+  replicas: 4
+  template:
+    metadata:
+      name: express-learn-pod
+      labels:
+        app: express-learn
+    spec:
+      containers:
+        - name: express-learn-app
+          image: express-learn
+          ports:
+            - containerPort: 3000
+          imagePullPolicy: IfNotPresent
+  selector:
+    matchLabels:
+        app: express-learn
