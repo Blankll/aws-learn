@@ -1,0 +1,51 @@
+Description:  create s3 bucket resources for lambda learn session
+
+Resources:
+  AchiveBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: seven-lambda-learn-achive
+      Tags:
+        - Key: group
+          Value: aws-learn
+        - Key: tribe
+          Value: seven-lambda-learn
+        - Key: application
+          Value: seven-03-lambda
+  OriginalBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: seven-lambda-learn-original
+      Tags:
+        - Key: group
+          Value: aws-learn
+        - Key: tribe
+          Value: seven-lambda-learn
+        - Key: application
+          Value: seven-03-lambda
+  TargetBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: seven-lambda-learn-target
+      Tags:
+        - Key: group
+          Value: aws-learn
+        - Key: tribe
+          Value: lisheng-lambda-learn
+        - Key: application
+          Value: seven-03-lambda
+Outputs:
+  AchiveBucket:
+    Value: !Ref AchiveBucket
+    Export:
+      Name: AchiveBucket
+  AchiveBucketArn:
+    Value: !GetAtt AchiveBucket.Arn
+  OriginalBucket:
+    Value: !Ref OriginalBucket
+  OriginalBucketArn:
+    Value: !GetAtt OriginalBucket.Arn
+  TargetBucket:
+    Value: !Ref TargetBucket
+  TargetBucketArn:
+    Value: !GetAtt TargetBucket.Arn

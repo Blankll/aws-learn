@@ -1,0 +1,50 @@
+Description:  lambda stack for lambda learn session
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      # Policies: 
+      #   - PolicyName: AWSLambdaBasicExecutionRole
+      #     PolicyDocument:
+      #       Version: 2012-10-17
+      #       Statement:
+      #         - Effect: Allow
+      #           Action:
+      #             - logs:CreateLogGroup
+      #             - logs:CreateLogStream
+      #             - logs:PutLogEvents
+      #           Resource: "*"
+      #   - PolicyName: AmazonS3FullAccess
+      #     PolicyDocument:
+      #       Version: 2012-10-17
+      #       Statement:
+      #         - Effect: Allow
+      #           Action: "s3:*"
+      #           Resource: 
+      #             - !ImportValue AchiveBucket
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: seven-lambda-learn-lambda
+      Runtime: nodejs14.x
+      Role: !GetAtt 'LambdaRole.Arn'
+      Handler: app.handler
+      Timeout: 300
+      Code:
+        S3Bucket: !ImportValue AchiveBucket
+        S3Key: lambda-learn.zip
+      Tags:
+          - Key: group
+            Value: aws-learn
+          - Key: tribe
+            Value: seven-lambda-learn
+          - Key: application
+            Value: seven-03-lambda
