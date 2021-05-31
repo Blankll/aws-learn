@@ -1,6 +1,14 @@
 Description:  lambda stack for lambda learn session
-
+Parameters:
+  LambdaName:
+    Description: lambda default name
+    Type: String
+    Default: seven-lambda-learn-lambda
 Resources:
+  CloudWatchLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', ['/aws/lambda/', !Ref LambdaName ] ]
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -11,29 +19,21 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
-      # Policies: 
-      #   - PolicyName: AWSLambdaBasicExecutionRole
-      #     PolicyDocument:
-      #       Version: 2012-10-17
-      #       Statement:
-      #         - Effect: Allow
-      #           Action:
-      #             - logs:CreateLogGroup
-      #             - logs:CreateLogStream
-      #             - logs:PutLogEvents
-      #           Resource: "*"
-      #   - PolicyName: AmazonS3FullAccess
-      #     PolicyDocument:
-      #       Version: 2012-10-17
-      #       Statement:
-      #         - Effect: Allow
-      #           Action: "s3:*"
-      #           Resource: 
-      #             - !ImportValue AchiveBucket
+      Policies: 
+        - PolicyName: AWSLambdaBasicExecutionRole
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt 'CloudWatchLambdaLogGroup.Arn'
   LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: seven-lambda-learn-lambda
+      FunctionName: !Ref LambdaName
       Runtime: nodejs14.x
       Role: !GetAtt 'LambdaRole.Arn'
       Handler: app.handler
