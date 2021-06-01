@@ -48,3 +48,20 @@ Resources:
             Value: seven-lambda-learn
           - Key: application
             Value: seven-03-lambda
+  ScheduledRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: 'ScheduledRule to trigger lambda regularly for lambda learn session'
+      ScheduleExpression: 'rate(2 hours)'
+      State: 'ENABLED'
+      Targets:
+        - Arn:  !GetAtt 'LambdaFunction.Arn'
+          Id: !Join ['-', [!Ref LambdaName,  'event-rule'] ]
+  PermissionForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: 'events.amazonaws.com'
+      SourceArn: !GetAtt 'ScheduledRule.Arn'
+
