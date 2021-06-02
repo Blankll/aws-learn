@@ -1,6 +1,16 @@
 Description:  create s3 bucket resources for lambda learn session
-
+Parameters:
+  OriginalBucketName:
+    Type: String
+    Default: seven-lambda-learn-original
 Resources:
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !ImportValue LambdaFunctionName
+      Action: 'lambda:InvokeFunction'
+      Principal: s3.amazonaws.com
+      SourceArn: !Join ['', ['arn:aws:s3:::', !Ref OriginalBucketName] ]
   AchiveBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -15,7 +25,11 @@ Resources:
   OriginalBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: seven-lambda-learn-original
+      BucketName: !Ref OriginalBucketName
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:Put'
+            Function: !ImportValue LambdaFunctionArn
       Tags:
         - Key: group
           Value: aws-learn
@@ -41,11 +55,21 @@ Outputs:
       Name: AchiveBucket
   AchiveBucketArn:
     Value: !GetAtt AchiveBucket.Arn
+    Export:
+      Name: AchiveBucketArn
   OriginalBucket:
     Value: !Ref OriginalBucket
+    Export:
+      Name: OriginalBucket
   OriginalBucketArn:
     Value: !GetAtt OriginalBucket.Arn
+    Export:
+      Name: OriginalBucketArn
   TargetBucket:
     Value: !Ref TargetBucket
+    Export:
+      Name: TargetBucket
   TargetBucketArn:
     Value: !GetAtt TargetBucket.Arn
+    Export:
+      Name: TargetBucketArn

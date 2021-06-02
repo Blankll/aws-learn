@@ -30,6 +30,20 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: !GetAtt 'CloudWatchLambdaLogGroup.Arn'
+        - PolicyName: AWSLambdaBasicObjectPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !ImportValue OriginalBucketArn
+                  - !Join ['/', [!ImportValue OriginalBucketArn, '*']]
+                  - !ImportValue TargetBucketArn
+                  - !Join ['/', [!ImportValue TargetBucketArn, '*']]
   LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -64,4 +78,12 @@ Resources:
       Action: 'lambda:InvokeFunction'
       Principal: 'events.amazonaws.com'
       SourceArn: !GetAtt 'ScheduledRule.Arn'
-
+Outputs:
+  LambdaFunctionName:
+    Value: !Ref LambdaFunction
+    Export:
+      Name: LambdaFunctionName
+  LambdaFunctionArn:
+    Value: !GetAtt 'LambdaFunction.Arn'
+    Export:
+      Name: LambdaFunctionArn
