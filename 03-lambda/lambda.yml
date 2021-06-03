@@ -78,6 +78,22 @@ Resources:
       Action: 'lambda:InvokeFunction'
       Principal: 'events.amazonaws.com'
       SourceArn: !GetAtt 'ScheduledRule.Arn'
+  LambdaErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: seven-lambda-learn-alarm-error
+      AlarmDescription: 'Alarm if lambda errors occur'
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LambdaFunction
+      Statistic: Sum
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 0
+      EvaluationPeriods: 1
+      Period: 60
+      TreatMissingData: breaching
 Outputs:
   LambdaFunctionName:
     Value: !Ref LambdaFunction
