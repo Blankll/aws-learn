@@ -5,17 +5,17 @@ const targetBucketName = 'seven-lambda-learn-target';
 
 exports.handler = async (event) => {
     let body = 'Hello from Lambda!';
+    let statusCode = 200;
+    console.log('event',JSON.stringify(event));
     if (event.source === 'aws.events') {
-        console.log('triggerd by ScheduledEvent');
         body = 'hello from ScheduledEvent';
     } else if (event.Records && event.Records[0].eventSource === 'aws:s3'){
-        console.log('request s3 object', JSON.stringify(event.Records[0].s3.object));
+        const sourceBucketName = event.Records[0].s3.bucket.name;
+        const sourceKey = event.Records[0].s3.object.key;
         try {
-            const exists = await s3.headObject({ Bucket: targetBucketName, Key: key}).promise().then(() => true).catch(err => err.code === 'NotFound' && false);
+            const exists = await s3.headObject({ Bucket: targetBucketName, Key: sourceKey}).promise().then(() => true).catch(err => err.code === 'NotFound' && false);
             console.log('exists', JSON.stringify(exists));
             if(!exists) {
-                const sourceBucketName = event.Records[0].s3.bucket.name;
-                const sourceKey = event.Records[0].s3.object.key;
                 const result = await s3.copyObject({
                     Bucket: targetBucketName,
                     CopySource: `${sourceBucketName}/${sourceKey}`,
@@ -26,12 +26,16 @@ exports.handler = async (event) => {
             body = 'hello from s3 file copyed success!';
         }catch(e) {
             body = 'hello from s3 file copyed failed!';
+            statusCode = 500;
             console.error('document error cached', JSON.stringify(e));
         }
+    } else if (event.result === 'error') {
+        body = 'error request!';
+        statusCode = 400;
     }
-
+    
     return {
-        statusCode: 200,
+        statusCode,
         body: JSON.stringify(body),
     };
 };  
