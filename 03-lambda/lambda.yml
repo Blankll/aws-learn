@@ -1,0 +1,105 @@
+Description:  lambda stack for lambda learn session
+Parameters:
+  LambdaName:
+    Description: lambda default name
+    Type: String
+    Default: seven-lambda-learn-lambda
+Resources:
+  CloudWatchLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', ['/aws/lambda/', !Ref LambdaName ] ]
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies: 
+        - PolicyName: AWSLambdaBasicExecutionRole
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt 'CloudWatchLambdaLogGroup.Arn'
+        - PolicyName: AWSLambdaBasicObjectPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !ImportValue OriginalBucketArn
+                  - !Join ['/', [!ImportValue OriginalBucketArn, '*']]
+                  - !ImportValue TargetBucketArn
+                  - !Join ['/', [!ImportValue TargetBucketArn, '*']]
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaName
+      Runtime: nodejs14.x
+      Role: !GetAtt 'LambdaRole.Arn'
+      Handler: app.handler
+      Timeout: 300
+      Code:
+        S3Bucket: !ImportValue AchiveBucket
+        S3Key: lambda-learn.zip
+      Tags:
+          - Key: group
+            Value: aws-learn
+          - Key: tribe
+            Value: seven-lambda-learn
+          - Key: application
+            Value: seven-03-lambda
+  ScheduledRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: 'ScheduledRule to trigger lambda regularly for lambda learn session'
+      ScheduleExpression: 'rate(2 hours)'
+      State: 'ENABLED'
+      Targets:
+        - Arn:  !GetAtt 'LambdaFunction.Arn'
+          Id: !Join ['-', [!Ref LambdaName,  'event-rule'] ]
+  PermissionForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: 'events.amazonaws.com'
+      SourceArn: !GetAtt 'ScheduledRule.Arn'
+  LambdaErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: seven-lambda-learn-alarm-error
+      AlarmDescription: 'Alarm if lambda errors occur'
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LambdaFunction
+      Statistic: Sum
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 0
+      EvaluationPeriods: 1
+      Period: 60
+      TreatMissingData: breaching
+Outputs:
+  LambdaFunctionName:
+    Value: !Ref LambdaFunction
+    Export:
+      Name: LambdaFunctionName
+  LambdaFunctionArn:
+    Value: !GetAtt 'LambdaFunction.Arn'
+    Export:
+      Name: LambdaFunctionArn
