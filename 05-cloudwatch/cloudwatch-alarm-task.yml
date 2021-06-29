@@ -1,0 +1,122 @@
+Description:  lambda stack for CloudWatch learn session
+Parameters:
+  LambdaName:
+    Description: lambda default name
+    Type: String
+    Default: seven-cloudwatch-learn-lambda
+  CustomMetricsNamespace:
+    Description: custom metrics default namespace
+    Type: String
+    Default: seven-metrics-namespace
+  CustomMetricName:
+    Description: custom metrics default name
+    Type: String
+    Default: seven-custom-metric
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies: 
+        - PolicyName: AWSLambdaProcessMetricsPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    'cloudwatch:namespace': !Ref CustomMetricsNamespace
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaName
+      Runtime: nodejs12.x
+      Role: !GetAtt 'LambdaRole.Arn'
+      Handler: index.handler
+      Timeout: 300
+      Code:
+        ZipFile: |
+          const aws = require('aws-sdk');
+          const cw = new aws.CloudWatch({apiVersion: '2010-08-01'});
+
+          exports.handler = async (event) => {
+              let body = 'Hello from Lambda!';
+              let statusCode = 200;
+              console.log('event',JSON.stringify(event));
+              if (event.source === 'aws.events') {
+                  body = 'hello from ScheduledEvent';
+                  const params = {
+                      Namespace: 'seven-metrics-namespace',
+                      MetricData: [{
+                          MetricName: 'seven-custom-metric',
+                          Dimensions: [{
+                              Name: 'FunctionName',
+                              Value: 'seven-cloudwatch-learn-lambda'
+                          }],
+                          Unit: 'Count',
+                          Value: 1
+                      }]
+                  };
+                  const response = await cw.putMetricData(params).promise();
+                  console.log('metrics update result:', JSON.stringify(response));
+              } else if (event.result === 'error') {
+                  body = 'error request!';
+                  statusCode = 400;
+              }
+              
+              return {
+                  statusCode,
+                  body: JSON.stringify(body),
+              };
+          };
+
+      Tags:
+          - Key: group
+            Value: aws-learn
+          - Key: tribe
+            Value: seven-cloudwatch-learn
+          - Key: application
+            Value: seven-05-cloudwatch
+  ScheduledRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: 'ScheduledRule to trigger lambda regularly for CloudWatch learn session'
+      ScheduleExpression: 'rate(1 minute)'
+      State: 'ENABLED'
+      Targets:
+        - Arn:  !GetAtt 'LambdaFunction.Arn'
+          Id: !Join ['-', [!Ref LambdaName,  'event-rule'] ]
+  PermissionForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: 'events.amazonaws.com'
+      SourceArn: !GetAtt 'ScheduledRule.Arn'
+  LambdaCustomMetricsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: seven-cloudwatch-learn-alarm-custom
+      AlarmDescription: 'Alarm if lambda errors occur'
+      Namespace: !Ref CustomMetricsNamespace
+      MetricName: !Ref CustomMetricName
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LambdaFunction
+      Statistic: Sum
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 0
+      EvaluationPeriods: 1
+      Period: 600
+      TreatMissingData: breaching
