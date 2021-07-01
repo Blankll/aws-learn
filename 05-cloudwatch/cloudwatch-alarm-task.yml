@@ -104,6 +104,13 @@ Resources:
       Action: 'lambda:InvokeFunction'
       Principal: 'events.amazonaws.com'
       SourceArn: !GetAtt 'ScheduledRule.Arn'
+  TaskAlarmSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: seven-alarm-topic-task
+      Subscription:
+        - Protocol: email
+          Endpoint: 'lisheng.zi@thoughtworks.com'
   LambdaCustomMetricsAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
@@ -120,3 +127,5 @@ Resources:
       EvaluationPeriods: 1
       Period: 600
       TreatMissingData: breaching
+      AlarmActions:
+        - !Ref TaskAlarmSNSTopic
