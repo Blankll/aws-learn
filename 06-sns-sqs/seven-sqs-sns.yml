@@ -1,0 +1,124 @@
+
+Resources:
+  SQSFromSNS:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: seven-sns-sqs-sqs
+      VisibilityTimeout: 300
+  LambdaSQSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: lambda-consume-SQS-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ChangeMessageVisibility
+                Resource: !GetAtt 'SQSFromSNS.Arn'
+  LambdaSNSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+  LambdaSQSFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: seven-sns-sqs-lambda-by-sqs
+      Runtime: nodejs12.x
+      Role: !GetAtt 'LambdaSQSRole.Arn'
+      Handler: index.handler
+      Timeout: 300
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            console.log('event request', JSON.Stringify(event));
+          };
+  LambdaSNSFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: seven-sns-sqs-lambda-by-sns
+      Runtime: nodejs12.x
+      Role: !GetAtt 'LambdaSNSRole.Arn'
+      Handler: index.handler
+      Timeout: 300
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            console.log('event request', JSON.Stringify(event));
+          };
+  LambdaFunctionEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn: !GetAtt 'SQSFromSNS.Arn'
+      FunctionName: !GetAtt 'LambdaSQSFunction.Arn'
+  SNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: seven-sns-sqs-topic
+        Subscription:
+          - Protocol: sqs
+            Endpoint: !GetAtt 'SQSFromSNS.Arn'
+          - Protocol: email
+            Endpoint: 'lisheng.zi@thoughtworks.com'
+          - Protocol: lambda
+            Endpoint: !GetAtt 'LambdaSNSFunction.Arn'
+  PermissionForSNSToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt 'LambdaSNSFunction.Arn'
+      Action: 'lambda:InvokeFunction'
+      Principal: 'sns.amazonaws.com'
+      SourceArn: !Ref 'SNSTopic'
+  PermissionForSQSToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt 'LambdaSQSFunction.Arn'
+      Action: 'lambda:InvokeFunction'
+      Principal: 'sqs.amazonaws.com'
+      SourceArn: !GetAtt 'SQSFromSNS.Arn'
+  EventPublishSNSPolicy:
+      Type: AWS::SNS::TopicPolicy
+      Properties:
+        Topics:
+          - !Ref SNSTopic
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: events.amazonaws.com
+              Action: sns:Publish
+              Resource: !Ref SNSTopic
+  ScheduledEvent:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: 'ScheduledRule to trigger SNS regularly for SNS-SQS learn session'
+      ScheduleExpression: 'rate(5 minutes)'
+      State: 'ENABLED'
+      Targets:
+        - Arn:  !Ref 'SNSTopic'
+          Id: 'SNSTopic'
+
